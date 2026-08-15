@@ -12,6 +12,3 @@ def BlobLogProcessor(myblob: func.InputStream):
     logging.info(f"SERVERLESS TRIGGER INITIATED: Python Azure Function processing new upload.")
     logging.info(f"File Name: {file_name}")
     logging.info(f"File Size: {file_size} bytes")
-    
-    # In a production environment, you could add code here to run OCR, 
-    # scan for viruses, or update the Azure Table Storage records!
