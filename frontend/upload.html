@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Templates - Administrative Organizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><h2>Organizer</h2></div>
+        <nav>
+            <a href="dashboard.html"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+            <a href="upload.html" class="active"><i data-lucide="file-plus"></i> Form Templates</a>
+            <a href="archives.html"><i data-lucide="archive"></i> Archives</a>
+            <a href="settings.html"><i data-lucide="settings"></i> System Settings</a>
+            <a href="login.html" onclick="localStorage.removeItem('userEmail')" style="margin-top: auto; color: #fca5a5;"><i data-lucide="log-out"></i> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-utility-bar">
+            <div class="search-container">
+                <i data-lucide="search" size="18" color="var(--text-muted)"></i>
+                <input type="text" id="globalSearch" placeholder="Search forms (Press '/')">
+            </div>
+            <div class="utility-actions">
+                <i data-lucide="bell" size="20"></i>
+                <i data-lucide="user-circle" size="24"></i>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="page-header">
+                <h1>Dynamic Form Submission</h1>
+                <p>Upload and submit new forms easily.</p>
+            </div>
+
+            <div class="metric-card" style="max-width: 600px;">
+                <form id="uploadForm">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Attach Document (PDF, JPG, PNG)</label>
+                        <input type="file" id="fileInput" required style="width: 100%; padding: 12px; border: 2px dashed var(--border); border-radius: var(--radius-md); background: var(--bg-workspace);">
+                    </div>
+                    <button type="submit" class="btn" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-md); cursor: pointer; font-weight: 600;">
+                        <i data-lucide="upload-cloud" size="18" style="vertical-align: middle; margin-right: 8px;"></i> Submit to Queue
+                    </button>
+                </form>
+                <p id="status" style="margin-top: 15px; font-weight: 500; font-size: 0.9rem;"></p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        //security redirect: return unauthenticated users to login
+        if (!localStorage.getItem('userEmail')) {
+            window.location.href = "login.html";
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('globalSearch').focus();
+            }
+        });
+
+        const form = document.getElementById('uploadForm');
+        const statusEl = document.getElementById('status');
+        const fileInput = document.getElementById('fileInput');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (fileInput.files.length === 0) return;
+
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) {
+                statusEl.style.color = 'var(--status-rejected-txt)';
+                statusEl.innerHTML = '<i data-lucide="alert-circle" style="margin-right: 5px; vertical-align: middle;"></i> Error: You must be logged in to upload.';
+                lucide.createIcons();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('email', userEmail);
+
+            statusEl.style.color = 'var(--text-muted)';
+            statusEl.innerHTML = '<i data-lucide="loader" class="spin" style="margin-right: 5px; vertical-align: middle;"></i> Processing...';
+            lucide.createIcons();
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    statusEl.style.color = 'var(--status-approved-txt)';
+                    statusEl.innerHTML = '✔ Successfully ingested to queue.';
+                    fileInput.value = '';
+                } else {
+                    statusEl.style.color = 'var(--status-rejected-txt)';
+                    statusEl.textContent = '❌ Upload failed.';
+                }
+            } catch (err) {
+                statusEl.style.color = 'var(--status-rejected-txt)';
+                statusEl.textContent = '❌ Network error.';
+            }
+        });
+    </script>
+</body>
+</html>

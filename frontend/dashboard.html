@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Administrative Organizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><h2>Organizer</h2></div>
+        <nav>
+            <a href="dashboard.html" class="active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+            <a href="upload.html"><i data-lucide="file-plus"></i> Form Templates</a>
+            <a href="archives.html"><i data-lucide="archive"></i> Archives</a>
+            <a href="settings.html"><i data-lucide="settings"></i> System Settings</a>
+            <a href="login.html" onclick="localStorage.removeItem('userEmail')" style="margin-top: auto; color: #fca5a5;"><i data-lucide="log-out"></i> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <!--top bar-->
+        <header class="top-utility-bar">
+            <div class="search-container">
+                <i data-lucide="search" size="18" color="var(--text-muted)"></i>
+                <input type="text" id="globalSearch" placeholder="Search forms (Press '/')">
+            </div>
+            <div class="utility-actions">
+                <i data-lucide="bell" size="20"></i>
+                <i data-lucide="user-circle" size="24"></i>
+            </div>
+        </header>
+
+        <!--main content-->
+        <main class="content-area">
+            <div class="page-header">
+                <h1>Forms Overview</h1>
+                <p>Welcome back! Here is a summary of your forms.</p>
+            </div>
+
+            <!--main stage metrics-->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">Total Forms</div>
+                    <div class="metric-value" id="totalForms">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Pending Forms</div>
+                    <div class="metric-value" id="pendingForms" style="color: var(--status-pending-txt);">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Completion Rate</div>
+                    <div class="metric-value" id="completionRate" style="color: var(--status-approved-txt);">0%</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        //security redirect: return unauthenticated users to login
+        if (!localStorage.getItem('userEmail')) {
+            window.location.href = "login.html";
+        }
+
+        //fetch real user documents and calculate metrics
+        async function loadDashboardMetrics() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/documents');
+                const documents = await response.json();
+
+                const total = documents.length;
+                const pending = documents.filter(doc => doc.status === 'Pending').length;
+                const completed = documents.filter(doc => doc.status === 'Completed').length; // Changed from 'Approved' to 'Completed'
+                const completion = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                document.getElementById('totalForms').textContent = total;
+                document.getElementById('pendingForms').textContent = pending;
+                document.getElementById('completionRate').textContent = completion + '%';
+            } catch (error) {
+                console.error("Failed to load dashboard metrics", error);
+            }
+        }
+
+        loadDashboardMetrics();
+
+        //keyboard productivity: "press '/' to search"
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('globalSearch').focus();
+            }
+        });
+    </script>
+</body>
+</html>

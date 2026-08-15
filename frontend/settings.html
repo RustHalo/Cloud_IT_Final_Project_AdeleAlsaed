@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Settings - Administrative Organizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><h2>Organizer</h2></div>
+        <nav>
+            <a href="dashboard.html"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+            <a href="upload.html"><i data-lucide="file-plus"></i> Form Templates</a>
+            <a href="archives.html"><i data-lucide="archive"></i> Archives</a>
+            <a href="settings.html" class="active"><i data-lucide="settings"></i> System Settings</a>
+            <a href="login.html" onclick="localStorage.removeItem('userEmail')" style="margin-top: auto; color: #fca5a5;"><i data-lucide="log-out"></i> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-utility-bar">
+            <div class="search-container">
+                <i data-lucide="search" size="18" color="var(--text-muted)"></i>
+                <input type="text" id="globalSearch" placeholder="Search forms (Press '/')">
+            </div>
+            <div class="utility-actions">
+                <i data-lucide="bell" size="20"></i>
+                <i data-lucide="user-circle" size="24"></i>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="page-header">
+                <h1>System Settings</h1>
+                <p>Manage your account preferences and notifications.</p>
+            </div>
+
+            <div class="metric-card" style="max-width: 600px;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Cloud Storage Configuration</h3>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">System Notifications</label>
+                    <select style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-component); outline: none;">
+                        <option>Dispatch automated email alerts</option>
+                        <option>Mute all alerts</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="alert('Settings saved successfully!')" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-md); cursor: pointer;">Save Configuration</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        //security redirect: return unauthenticated users to login
+        if (!localStorage.getItem('userEmail')) {
+            window.location.href = "login.html";
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('globalSearch').focus();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Archives - Administrative Organizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand"><h2>Organizer</h2></div>
+        <nav>
+            <a href="dashboard.html"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+            <a href="upload.html"><i data-lucide="file-plus"></i> Form Templates</a>
+            <a href="archives.html" class="active"><i data-lucide="archive"></i> Archives</a>
+            <a href="settings.html"><i data-lucide="settings"></i> System Settings</a>
+            <a href="login.html" onclick="localStorage.removeItem('userEmail')" style="margin-top: auto; color: #fca5a5;"><i data-lucide="log-out"></i> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-utility-bar">
+            <div class="search-container">
+                <i data-lucide="search" size="18"></i>
+                <input type="text" id="globalSearch" placeholder="Search archives...">
+            </div>
+            <div class="utility-actions">
+                <button class="btn" style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                    <i data-lucide="download" size="16" style="vertical-align: middle;"></i> Export CSV
+                </button>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="page-header">
+                <h1>Submission Archives</h1>
+                <p>View and manage all your submitted forms.</p>
+            </div>
+
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>File Name <i data-lucide="chevron-down" size="14"></i></th>
+                            <th>Department</th>
+                            <th>Date Submitted</th>
+                            <th>Status (Click to cycle)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td style="font-weight: 500;">Parental_Consent_Form.pdf</td>
+                            <td style="color: var(--text-muted);">Legal</td>
+                            <td>2026-08-11</td>
+                            <td><span class="status-tag tag-pending" onclick="cycleStatus(this)">Pending</span></td>
+                            <td class="action-icons">
+                                <i data-lucide="eye" onclick="openPanel('Parental_Consent_Form.pdf', 'Legal', 'Pending')"></i>
+                                <i data-lucide="download"></i>
+                                <i data-lucide="trash-2"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        //security redirect: return unauthenticated users back to login
+        if (!localStorage.getItem('userEmail')) {
+            window.location.href = "login.html";
+        }
+
+        //load documents from azure
+        async function fetchDocuments() {
+            const tbody = document.getElementById('tableBody');
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/documents');
+                const documents = await response.json();
+
+                tbody.innerHTML = '';
+                documents.forEach(doc => {
+                    //color tag based on status
+                    let tagClass = 'tag-pending';
+                    if (doc.status === 'Completed') tagClass = 'tag-approved';
+                    if (doc.status === 'Incomplete') tagClass = 'tag-rejected';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="font-weight: 500;">${doc.name}</td>
+                        <td style="color: var(--text-muted);">${doc.department}</td>
+                        <td>${doc.last_modified}</td>
+                        <td>
+                            <span class="status-tag ${tagClass}" onclick="cycleStatus(this, '${doc.name}')">${doc.status}</span>
+                        </td>
+                        <td class="action-icons" style="display: flex; gap: 12px; align-items: center; cursor: pointer;">
+                            <i data-lucide="download" onclick="downloadFile('${doc.name}')" title="Download Form" style="width: 18px; height: 18px; color: var(--text-main);"></i>
+                            <i data-lucide="trash-2" onclick="deleteFile('${doc.name}')" title="Delete Form" style="width: 18px; height: 18px; color: #ef4444;"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                lucide.createIcons();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data from Azure.</td></tr>`;
+            }
+        }
+
+        const states = [
+            { class: 'tag-pending', text: 'Pending' },
+            { class: 'tag-approved', text: 'Completed' },
+            { class: 'tag-rejected', text: 'Incomplete' }
+        ];
+
+        //optimistic UI + database sync
+        async function cycleStatus(element, filename) {
+            let currentState = element.textContent;
+            let currentIndex = states.findIndex(s => s.text === currentState);
+            let nextState = states[(currentIndex + 1) % states.length];
+            
+            // 1.optimistic UI update (changes instantly for the user)
+            element.className = `status-tag ${nextState.class}`;
+            element.textContent = nextState.text;
+
+            // 2.background sync to azure
+            try {
+                await fetch(`http://127.0.0.1:8000/api/documents/${filename}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: nextState.text })
+                });
+                //if it fails: revert the UI color
+            } catch (error) {
+                console.error("Failed to sync status to cloud", error);
+            }
+        }
+
+        //slide-out panel logic
+        const panel = document.getElementById('slidePanel');
+    
+
+        //download file from azure storage via backend function
+        async function downloadFile(filename) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/api/documents/${filename}/download`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else {
+                    alert('Failed to download file.');
+                }
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Network error during download.');
+            }
+        }
+
+        //delete file from azure storage and backend function
+        async function deleteFile(filename) {
+            if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/api/documents/${filename}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    //refresh table
+                    fetchDocuments();
+                } else {
+                    alert('Failed to delete file.');
+                }
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('Network error during deletion.');
+            }
+        }
+
+        function closePanel() {
+            panel.classList.remove('open');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePanel();
+            if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('globalSearch').focus();
+            }
+        });
+
+        fetchDocuments();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Administrative Organizer</title>
+    
+
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /*layout*/
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;        
+            overflow-y: auto;  
+            background-color: var(--bg-workspace);
+        }
+        
+        .landing-nav {
+            display: flex;
+            justify-content: flex-end;
+            padding: 1.5rem 2.5rem;
+            gap: 15px;
+        }
+
+        .auth-button {
+            padding: 10px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 6rem 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            letter-spacing: -1px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            line-height: 1.6;
+            margin-bottom: 3.5rem;
+            animation: fadeInUp 1.1s ease-out backwards;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+            animation: fadeInUp 1.4s ease-out backwards;
+        }
+
+        .feature-card {
+            background: var(--bg-component);
+            padding: 2.5rem 2rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        
+        <!--top right navigation-->
+        <nav class="landing-nav" id="topNav">
+            <a href="login.html" class="auth-button" style="background: transparent; color: var(--text-main); border: 1px solid var(--border);">Login</a>
+            <a href="login.html?mode=signup" class="auth-button" style="background: var(--primary); color: white; border: none;">Sign Up</a>
+        </nav>
+
+        <!--main hero content-->
+        <main style="flex: 1;">
+            <div class="hero-section">
+                <h1 class="hero-title">Administrative Form Organizer</h1>
+                <p class="hero-subtitle">Secure Document Management & Cloud Storage. Digitize your paperwork, automate workflows, and maintain a centralized, highly-secure queue.</p>
+            </div>
+
+            <!--example features-->
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i data-lucide="upload-cloud" size="48" class="feature-icon"></i>
+                    <h3 style="margin-bottom: 12px; color: var(--text-main); font-size: 1.25rem;">Upload & Digitize</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Seamlessly upload PDF and image forms directly to a secure Azure Blob Storage container.</p>
+                </div>
+                <div class="feature-card">
+                    <i data-lucide="archive" size="48" class="feature-icon"></i>
+                    <h3 style="margin-bottom: 12px; color: var(--text-main); font-size: 1.25rem;">Organize & Archive</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Keep track of all submissions with multi-layered filtering and real-time status updates.</p>
+                </div>
+                <div class="feature-card">
+                    <i data-lucide="check-circle" size="48" class="feature-icon"></i>
+                    <h3 style="margin-bottom: 12px; color: var(--text-main); font-size: 1.25rem;">Review & Check</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">Process forms instantly with optimistic UI updates and background cloud synchronization.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        //dynamic navigation
+        if (localStorage.getItem('userEmail')) {
+            document.getElementById('topNav').innerHTML = `
+                <a href="dashboard.html" class="auth-button" style="background: var(--primary); color: white; border: none;">Go to Dashboard</a>
+            `;
+        }
+    </script>
+</body>
+</html>

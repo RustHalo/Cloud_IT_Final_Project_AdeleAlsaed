@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - Administrative Organizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-workspace);
+            padding-top: 100px;
+        }
+        .auth-card {
+            background: var(--bg-component);
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: 15px;
+            background: var(--bg-workspace);
+            outline: none;
+        }
+        .auth-input:focus {
+            border-color: var(--primary);
+        }
+        .auth-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .auth-btn:hover {
+            background: var(--primary-hover);
+        }
+    </style>
+</head>
+<body>
+    <!--clickable header title-->
+    <header style="position: absolute; top: 90px; left: 0; width: 100%; text-align: center;">
+        <a href="index.html" style="font-size: 2.2rem; font-weight: 700; color: var(--primary); text-decoration: none; letter-spacing: -0.5px;">
+            Administrative Form Organizer
+        </a>
+    </header>
+    <div class="auth-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="color: var(--primary); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px;" id="formTitle">System Login</h2>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;" id="formSubtitle">Log into your existing account.</p>
+        </div>
+
+        <form id="authForm">
+            <div id="nameGroup" style="display: none;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Full Name</label>
+                <input type="text" id="fullName" class="auth-input" placeholder="e.g., Jane Doe">
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Email Address</label>
+                <input type="email" id="email" class="auth-input" required placeholder="JaneDoe@gmail.com">
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">Password</label>
+                <input type="password" id="password" class="auth-input" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="auth-btn" id="submitBtn">Sign In</button>
+        </form>
+
+        <p id="authStatus" style="margin-top: 15px; font-size: 0.875rem; text-align: center; font-weight: 500;"></p>
+
+        <p id="toggleText" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+            Need System Access? <a href="#" id="toggleLink" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign Up</a>
+        </p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const authForm = document.getElementById('authForm');
+        const formTitle = document.getElementById('formTitle');
+        const formSubtitle = document.getElementById('formSubtitle');
+        const nameGroup = document.getElementById('nameGroup');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleText = document.getElementById('toggleText');
+        const authStatus = document.getElementById('authStatus');
+
+        let isRegistering = false;
+
+        function updateFormMode() {
+            authStatus.textContent = '';
+            if (isRegistering) {
+                formTitle.textContent = "Create An Account";
+                formSubtitle.textContent = "Register to have your own Administrative Form Organizer!";
+                nameGroup.style.display = "block";
+                submitBtn.textContent = "Create Profile";
+                toggleText.innerHTML = `Have Existing Account? <a href="#" id="toggleLink" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign In</a>`;
+            } else {
+                formTitle.textContent = "System Login";
+                formSubtitle.textContent = "Log into you existing Account.";
+                nameGroup.style.display = "none";
+                submitBtn.textContent = "Sign In";
+                toggleText.innerHTML = `Need System Access? <a href="#" id="toggleLink" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign Up</a>`;
+            }
+            document.getElementById('toggleLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                isRegistering = !isRegistering;
+                updateFormMode();
+            });
+        }
+
+        document.getElementById('toggleLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            isRegistering = !isRegistering;
+            updateFormMode();
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'signup') {
+            isRegistering = true;
+            updateFormMode();
+        }
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const fullName = document.getElementById('fullName').value;
+
+            if (isRegistering) {
+                const minLength = password.length >= 8;
+                const hasUpper = /[A-Z]/.test(password);
+                const hasLower = /[a-z]/.test(password);
+                const hasNum = /\d/.test(password);
+                const hasSpecial = /[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};':\"\\|,.<>\/?/]/.test(password);
+
+                if (!minLength || !hasUpper || !hasLower || !hasNum || !hasSpecial) {
+                    authStatus.style.color = 'var(--status-rejected-txt)';
+                    authStatus.textContent = 'Password must be 8+ chars (upper, lower, num, special).';
+                    return;
+                }
+            }
+
+            const endpoint = isRegistering ? '/api/register' : '/api/login';
+            const payload = isRegistering ? { full_name: fullName, email, password } : { email, password };
+
+            authStatus.style.color = 'var(--text-muted)';
+            authStatus.textContent = 'Connecting to Azure Auth...';
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    
+                    authStatus.style.color = 'var(--status-approved-txt)';
+                    authStatus.textContent = '✔ Authentication successful. Routing...';
+                    localStorage.setItem('userEmail', email);
+                    setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 1000);
+                } else {
+                    authStatus.style.color = 'var(--status-rejected-txt)';
+                    authStatus.textContent = '❌ ' + (result.detail || 'Access Denied.');
+                }
+            } catch (err) {
+                authStatus.style.color = 'var(--status-rejected-txt)';
+                authStatus.textContent = '❌ Network error.';
+            }
+        });
+    </script>
+</body>
+</html>
